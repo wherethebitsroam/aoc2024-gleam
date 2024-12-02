@@ -2,6 +2,7 @@ import gleam/dict
 import gleam/int
 import gleam/io
 import gleam/list
+import gleam/result
 import gleam/string
 import simplifile
 
@@ -19,40 +20,24 @@ fn parse_pair(pair: String) -> #(Int, Int) {
   #(f, s)
 }
 
-fn split_lists(
-  list: List(#(Int, Int)),
-  a: List(Int),
-  b: List(Int),
-) -> #(List(Int), List(Int)) {
-  case list {
-    [first, ..rest] -> split_lists(rest, [first.0, ..a], [first.1, ..b])
-    [] -> #(a, b)
-  }
-}
-
-fn sum_list(list: List(Int), total: Int) -> Int {
-  case list {
-    [first, ..rest] -> sum_list(rest, total + first)
-    [] -> total
-  }
+fn parse_input(s: String) -> #(List(Int), List(Int)) {
+  s
+  |> string.trim
+  |> string.split("\n")
+  |> list.map(parse_pair)
+  |> list.unzip
 }
 
 pub fn part1() -> Nil {
   let assert Ok(input) = simplifile.read(from: "../day01.txt")
 
-  let pairs =
-    input
-    |> string.trim
-    |> string.split("\n")
-    |> list.map(parse_pair)
-    |> split_lists([], [])
-
-  let a = pairs.0 |> list.sort(int.compare)
-  let b = pairs.1 |> list.sort(int.compare)
+  let #(left, right) = input |> parse_input
+  let a = left |> list.sort(int.compare)
+  let b = right |> list.sort(int.compare)
 
   let x =
     list.map2(a, b, fn(x, y) { x - y |> int.absolute_value })
-    |> sum_list(0)
+    |> list.fold(0, fn(a, b) { a + b })
 
   io.debug(x)
 
@@ -60,29 +45,23 @@ pub fn part1() -> Nil {
 }
 
 fn get_freq(d: dict.Dict(Int, List(Int)), i: Int) -> Int {
-  case dict.get(d, i) {
-    Ok(l) -> list.length(l)
-    Error(_) -> 0
-  }
+  dict.get(d, i)
+  |> result.map(list.length)
+  |> result.unwrap(0)
 }
 
 pub fn part2() -> Nil {
   let assert Ok(input) = simplifile.read(from: "../day01.txt")
   // let input = example
 
-  let pairs =
-    input
-    |> string.trim
-    |> string.split("\n")
-    |> list.map(parse_pair)
-    |> split_lists([], [])
+  let #(left, right) = input |> parse_input
 
-  let freq = pairs.1 |> list.group(fn(i) { i })
+  let freq = right |> list.group(fn(i) { i })
 
   let score =
-    pairs.0
+    left
     |> list.map(fn(x) { get_freq(freq, x) * x })
-    |> sum_list(0)
+    |> list.fold(0, fn(a, b) { a + b })
 
   io.debug(score)
 
