@@ -4,7 +4,6 @@ import gleam/io
 import gleam/list
 import gleam/result
 import gleam/string
-import simplifile
 
 const example = "3   4
 4   3
@@ -28,9 +27,7 @@ fn parse_input(s: String) -> #(List(Int), List(Int)) {
   |> list.unzip
 }
 
-pub fn part1() -> Nil {
-  let assert Ok(input) = simplifile.read(from: "../day01.txt")
-
+pub fn part1(input: String) -> Nil {
   let #(left, right) = input |> parse_input
   let a = left |> list.sort(int.compare)
   let b = right |> list.sort(int.compare)
@@ -50,10 +47,7 @@ fn get_freq(d: dict.Dict(Int, List(Int)), i: Int) -> Int {
   |> result.unwrap(0)
 }
 
-pub fn part2() -> Nil {
-  let assert Ok(input) = simplifile.read(from: "../day01.txt")
-  // let input = example
-
+pub fn part2(input: String) -> Nil {
   let #(left, right) = input |> parse_input
 
   let freq = right |> list.group(fn(i) { i })

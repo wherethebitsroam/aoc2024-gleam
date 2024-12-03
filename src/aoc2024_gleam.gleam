@@ -1,6 +1,7 @@
-import day01
-import day02
+import day03
+import simplifile
 
 pub fn main() {
-  day01.part2()
+  let assert Ok(input) = simplifile.read(from: "../day03.txt")
+  day03.part2(input)
 }

@@ -2,7 +2,6 @@ import gleam/int
 import gleam/io
 import gleam/list
 import gleam/string
-import simplifile
 
 const example = "7 6 4 2 1
 1 2 7 8 9
@@ -39,10 +38,7 @@ fn safe(l: List(Int)) -> Bool {
   inc || dec
 }
 
-pub fn part1() -> Nil {
-  let assert Ok(input) = simplifile.read(from: "../day02.txt")
-  // let input = example
-
+pub fn part1(input: String) -> Nil {
   let safe =
     input
     |> string.trim()
@@ -56,10 +52,7 @@ pub fn part1() -> Nil {
   Nil
 }
 
-pub fn part2() -> Nil {
-  let assert Ok(input) = simplifile.read(from: "../day02.txt")
-  // let input = example
-
+pub fn part2(input: String) -> Nil {
   let safe =
     input
     |> string.trim()
