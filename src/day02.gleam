@@ -1,14 +1,6 @@
 import gleam/int
-import gleam/io
 import gleam/list
 import gleam/string
-
-const example = "7 6 4 2 1
-1 2 7 8 9
-9 7 6 2 1
-1 3 2 4 5
-8 6 4 4 1
-1 3 6 7 9"
 
 fn parse_int(s: String) -> Int {
   let assert Ok(i) = int.parse(s)
@@ -38,31 +30,21 @@ fn safe(l: List(Int)) -> Bool {
   inc || dec
 }
 
-pub fn part1(input: String) -> Nil {
-  let safe =
-    input
-    |> string.trim()
-    |> string.split("\n")
-    |> list.map(parse_line)
-    |> list.filter(safe)
-    |> list.length
-
-  io.debug(safe)
-
-  Nil
+pub fn part1(input: String) -> Int {
+  input
+  |> string.trim()
+  |> string.split("\n")
+  |> list.map(parse_line)
+  |> list.filter(safe)
+  |> list.length
 }
 
-pub fn part2(input: String) -> Nil {
-  let safe =
-    input
-    |> string.trim()
-    |> string.split("\n")
-    |> list.map(parse_line)
-    |> list.map(combos)
-    |> list.filter(fn(l) { l |> list.any(safe) })
-    |> list.length
-
-  io.debug(safe)
-
-  Nil
+pub fn part2(input: String) -> Int {
+  input
+  |> string.trim()
+  |> string.split("\n")
+  |> list.map(parse_line)
+  |> list.map(combos)
+  |> list.filter(fn(l) { l |> list.any(safe) })
+  |> list.length
 }

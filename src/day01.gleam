@@ -1,6 +1,5 @@
 import gleam/dict
 import gleam/int
-import gleam/io
 import gleam/list
 import gleam/result
 import gleam/string
@@ -27,18 +26,13 @@ fn parse_input(s: String) -> #(List(Int), List(Int)) {
   |> list.unzip
 }
 
-pub fn part1(input: String) -> Nil {
+pub fn part1(input: String) -> Int {
   let #(left, right) = input |> parse_input
   let a = left |> list.sort(int.compare)
   let b = right |> list.sort(int.compare)
 
-  let x =
-    list.map2(a, b, fn(x, y) { x - y |> int.absolute_value })
-    |> list.fold(0, fn(a, b) { a + b })
-
-  io.debug(x)
-
-  Nil
+  list.map2(a, b, fn(x, y) { x - y |> int.absolute_value })
+  |> list.fold(0, fn(a, b) { a + b })
 }
 
 fn get_freq(d: dict.Dict(Int, List(Int)), i: Int) -> Int {
@@ -47,17 +41,12 @@ fn get_freq(d: dict.Dict(Int, List(Int)), i: Int) -> Int {
   |> result.unwrap(0)
 }
 
-pub fn part2(input: String) -> Nil {
+pub fn part2(input: String) -> Int {
   let #(left, right) = input |> parse_input
 
   let freq = right |> list.group(fn(i) { i })
 
-  let score =
-    left
-    |> list.map(fn(x) { get_freq(freq, x) * x })
-    |> list.fold(0, fn(a, b) { a + b })
-
-  io.debug(score)
-
-  Nil
+  left
+  |> list.map(fn(x) { get_freq(freq, x) * x })
+  |> list.fold(0, fn(a, b) { a + b })
 }

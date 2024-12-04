@@ -1,5 +1,4 @@
 import gleam/int
-import gleam/io
 import gleam/list
 import gleam/string
 
@@ -126,11 +125,6 @@ fn parse_mul(s: State) -> ParseResult(#(Int, Int)) {
   }
 }
 
-pub fn parse(s: String) -> Int {
-  let state = create_state(s)
-  parse_loop(state, 0)
-}
-
 fn parse_loop(state: State, acc: Int) -> Int {
   case parse_mul(state) {
     Success(#(a, b), state) -> parse_loop(state, acc + a * b)
@@ -142,15 +136,9 @@ fn parse_loop(state: State, acc: Int) -> Int {
   }
 }
 
-pub fn part1(input: String) -> Nil {
-  let value = parse(input)
-  io.debug(value)
-  Nil
-}
-
-pub fn parse2(s: String) -> Int {
-  let state = create_state(s)
-  parse_loop2(state, 0, True)
+pub fn part1(input: String) -> Int {
+  let state = create_state(input)
+  parse_loop(state, 0)
 }
 
 fn parse_loop2(state: State, acc: Int, enabled: Bool) -> Int {
@@ -187,8 +175,7 @@ fn parse_loop2(state: State, acc: Int, enabled: Bool) -> Int {
   }
 }
 
-pub fn part2(input: String) -> Nil {
-  let value = parse2(input)
-  io.debug(value)
-  Nil
+pub fn part2(input: String) -> Int {
+  let state = create_state(input)
+  parse_loop2(state, 0, True)
 }

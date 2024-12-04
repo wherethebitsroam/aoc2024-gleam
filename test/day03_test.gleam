@@ -6,7 +6,6 @@ pub fn main() {
   gleeunit.main()
 }
 
-// gleeunit test functions end in `_test`
 pub fn parse_int_test() {
   let state = day03.create_state("123x")
 
@@ -58,14 +57,14 @@ pub fn match_str_fail_halfway_test() {
 
 const example = "xmul(2,4)%&mul[3,7]!@^do_not_mul(5,5)+mul(32,64]then(mul(11,8)mul(8,5))"
 
-pub fn parse_test() {
-  day03.parse(example)
+pub fn part1_test() {
+  day03.part1(example)
   |> should.equal(161)
 }
 
 const example2 = "xmul(2,4)&mul[3,7]!^don't()_mul(5,5)+mul(32,64](mul(11,8)undo()?mul(8,5))"
 
-pub fn parse2_test() {
-  day03.parse2(example2)
+pub fn part2_test() {
+  day03.part2(example2)
   |> should.equal(48)
 }

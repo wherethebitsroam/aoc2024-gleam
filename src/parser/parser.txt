@@ -1,0 +1,34 @@
+import parser/stream
+
+// type Parser<'TResult, 'TUserState> = CharStream<'TUserState> -> Reply<'TResult>
+pub type Parser(result) =
+  fn(stream.Stream) -> Reply(result)
+
+// https://www.quanttec.com/fparsec/reference/charparsers.html#members.ParserResult
+// type ParserResult<'Result,'UserState>
+type ParserResult(result) {
+  // Success of 'Result * 'UserState * Position
+  // Success(result, userState, endPos)
+  Success(result)
+  // Failure of string * ParserError * 'UserState
+  // Failure(errorAsString, error, userState)
+  Failure(String)
+}
+
+fn run(p: Parser(result), s: String) -> ParserResult(result) {
+  todo
+}
+
+fn pint(s: stream.Stream) -> Reply(Int) {
+  todo
+}
+
+// Parsing sequences
+
+fn many(p: Parser(result)) -> Parser(List(result)) {
+  fn(s: stream.Stream) -> Reply(List(result)) {
+    case p.parse(s) {
+      Ok(r) -> [r]
+    }
+  }
+}
