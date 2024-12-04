@@ -139,17 +139,21 @@ pub fn part2(input: String) -> Int {
 
 // part1 take #2
 
-fn is_mas(g: Grid, mas: List(#(Int, Int)), index: #(Int, Int)) -> Bool {
-  case get_by_offsets(g, mas, index) {
+fn is_mas(g: Grid, offsets: List(#(Int, Int)), index: #(Int, Int)) -> Bool {
+  case get_by_offsets(g, offsets, index) {
     Ok(["M", "A", "S"]) -> True
     _ -> False
   }
 }
 
-fn check1(g: Grid, mass: List(List(#(Int, Int))), index: #(Int, Int)) -> Int {
+fn check1(
+  g: Grid,
+  dir_offsets: List(List(#(Int, Int))),
+  index: #(Int, Int),
+) -> Int {
   case dict.get(g, index) {
     Ok("X") -> {
-      mass
+      dir_offsets
       |> list.filter(is_mas(g, _, index))
       |> list.length
     }
@@ -166,13 +170,13 @@ pub fn part1_2(input: String) -> Int {
     })
     |> list.filter(fn(d) { d != #(0, 0) })
 
-  let mass =
+  let dir_offsets =
     dirs
     |> list.map(fn(d) { [d, #(d.0 * 2, d.1 * 2), #(d.0 * 3, d.1 * 3)] })
 
   let letters = make_dict(input)
   letters
   |> dict.keys
-  |> list.map(fn(i) { check1(letters, mass, i) })
+  |> list.map(fn(i) { check1(letters, dir_offsets, i) })
   |> list.fold(0, fn(a, b) { a + b })
 }
