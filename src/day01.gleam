@@ -4,13 +4,6 @@ import gleam/list
 import gleam/result
 import gleam/string
 
-const example = "3   4
-4   3
-2   5
-1   3
-3   9
-3   3"
-
 fn parse_pair(pair: String) -> #(Int, Int) {
   let assert Ok(x) = pair |> string.split_once("   ")
   let assert Ok(f) = x.0 |> int.parse
