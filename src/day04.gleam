@@ -1,6 +1,8 @@
 import gleam/dict
 import gleam/list
 import gleam/string
+import point.{type Point, Point}
+import util
 
 // part1
 
@@ -79,37 +81,24 @@ pub fn part1(input: String) -> Int {
 // part2
 
 type Grid =
-  dict.Dict(#(Int, Int), String)
-
-fn make_dict(input: String) -> Grid {
-  input
-  |> string.trim()
-  |> string.split("\n")
-  |> list.index_map(fn(row, y) {
-    row
-    |> string.to_graphemes
-    |> list.index_map(fn(c, x) { #(#(x, y), c) })
-  })
-  |> list.flatten
-  |> dict.from_list
-}
+  dict.Dict(Point, String)
 
 // 0.2
 // .X.
 // 3.1
-const offsets = [#(-1, -1), #(1, 1), #(1, -1), #(-1, 1)]
+const offsets = [Point(-1, -1), Point(1, 1), Point(1, -1), Point(-1, 1)]
 
 fn get_by_offsets(
   g: Grid,
-  offsets: List(#(Int, Int)),
-  index: #(Int, Int),
+  offsets: List(Point),
+  index: Point,
 ) -> Result(List(String), Nil) {
   offsets
-  |> list.map(fn(o) { #(index.0 + o.0, index.1 + o.1) })
+  |> list.map(fn(o) { point.add(index, o) })
   |> list.try_map(fn(idx) { dict.get(g, idx) })
 }
 
-fn check2(g: Grid, index: #(Int, Int)) -> Bool {
+fn check2(g: Grid, index: Point) -> Bool {
   case dict.get(g, index) {
     Ok("A") -> {
       case get_by_offsets(g, offsets, index) {
@@ -129,7 +118,7 @@ fn check2(g: Grid, index: #(Int, Int)) -> Bool {
 }
 
 pub fn part2(input: String) -> Int {
-  let letters = make_dict(input)
+  let letters = util.map_to_dict(input)
 
   letters
   |> dict.keys
@@ -139,18 +128,14 @@ pub fn part2(input: String) -> Int {
 
 // part1 take #2
 
-fn is_mas(g: Grid, offsets: List(#(Int, Int)), index: #(Int, Int)) -> Bool {
+fn is_mas(g: Grid, offsets: List(Point), index: Point) -> Bool {
   case get_by_offsets(g, offsets, index) {
     Ok(["M", "A", "S"]) -> True
     _ -> False
   }
 }
 
-fn check1(
-  g: Grid,
-  dir_offsets: List(List(#(Int, Int))),
-  index: #(Int, Int),
-) -> Int {
+fn check1(g: Grid, dir_offsets: List(List(Point)), index: Point) -> Int {
   case dict.get(g, index) {
     Ok("X") -> {
       dir_offsets
@@ -166,15 +151,15 @@ pub fn part1_2(input: String) -> Int {
     [-1, 0, 1]
     |> list.flat_map(fn(x) {
       [-1, 0, 1]
-      |> list.map(fn(y) { #(x, y) })
+      |> list.map(fn(y) { Point(x, y) })
     })
-    |> list.filter(fn(d) { d != #(0, 0) })
+    |> list.filter(fn(d) { d != Point(0, 0) })
 
   let dir_offsets =
     dirs
-    |> list.map(fn(d) { [d, #(d.0 * 2, d.1 * 2), #(d.0 * 3, d.1 * 3)] })
+    |> list.map(fn(p) { [p, point.scale(p, 2), point.scale(p, 3)] })
 
-  let letters = make_dict(input)
+  let letters = util.map_to_dict(input)
   letters
   |> dict.keys
   |> list.map(fn(i) { check1(letters, dir_offsets, i) })
