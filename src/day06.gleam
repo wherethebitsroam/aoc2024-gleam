@@ -130,18 +130,16 @@ fn get_possible_obs(path: List(PointDir)) -> Set(Point) {
   case path {
     [] -> set.new()
     [h, ..] -> {
-      let s =
-        path
-        |> list.window_by_2
-        |> list.filter_map(fn(pair) {
-          case { pair.0 }.dir == { pair.1 }.dir {
-            True -> Ok({ pair.1 }.point)
-            False -> Error(Nil)
-          }
-        })
-        |> set.from_list
-
-      s |> set.insert(h.point)
+      path
+      |> list.window_by_2
+      |> list.filter_map(fn(pair) {
+        case { pair.0 }.dir == { pair.1 }.dir {
+          True -> Ok({ pair.1 }.point)
+          False -> Error(Nil)
+        }
+      })
+      |> set.from_list
+      |> set.insert(h.point)
     }
   }
 }
