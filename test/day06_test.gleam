@@ -26,3 +26,8 @@ pub fn part2_test() {
   day06.part2(example)
   |> should.equal(6)
 }
+
+pub fn part2_2_test() {
+  day06.part2_2(example)
+  |> should.equal(6)
+}

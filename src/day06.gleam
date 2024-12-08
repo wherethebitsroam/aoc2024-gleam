@@ -20,6 +20,10 @@ type Dir {
 type Map =
   dict.Dict(Point, Block)
 
+type PointDir {
+  PointDir(point: Point, dir: Dir)
+}
+
 fn turn(dir: Dir) -> Dir {
   case dir {
     Up -> Right
@@ -63,22 +67,19 @@ fn extract_guard(
   }
 }
 
-fn walk(m: Map, start: PointDir) -> Int {
-  walk_loop(m, set.new(), start)
+fn path(m: Map, start: PointDir) -> List(PointDir) {
+  path_loop(m, [], start)
 }
 
-fn walk_loop(m: Map, seen: Set(Point), pd: PointDir) -> Int {
-  let seen = set.insert(seen, pd.point)
+fn path_loop(m: Map, acc: List(PointDir), pd: PointDir) -> List(PointDir) {
+  let acc = [pd, ..acc]
   let next = point.add(pd.point, move(pd.dir))
   case dict.get(m, next) {
-    Error(_) -> {
-      // next point is not on the map, return the set size
-      set.size(seen)
-    }
+    Error(_) -> acc
     Ok(block) -> {
       case block {
-        Free -> walk_loop(m, seen, PointDir(next, pd.dir))
-        Obs -> walk_loop(m, seen, PointDir(pd.point, turn(pd.dir)))
+        Free -> path_loop(m, acc, PointDir(next, pd.dir))
+        Obs -> path_loop(m, acc, PointDir(pd.point, turn(pd.dir)))
       }
     }
   }
@@ -99,29 +100,7 @@ fn parse(input: String) -> #(dict.Dict(Point, Block), PointDir) {
 
 pub fn part1(input: String) -> Int {
   let #(m, start) = parse(input)
-  walk(m, start)
-}
-
-type PointDir {
-  PointDir(point: Point, dir: Dir)
-}
-
-fn path(m: Map, start: PointDir) -> List(PointDir) {
-  path_loop(m, [], start)
-}
-
-fn path_loop(m: Map, acc: List(PointDir), pd: PointDir) -> List(PointDir) {
-  let acc = [pd, ..acc]
-  let next = point.add(pd.point, move(pd.dir))
-  case dict.get(m, next) {
-    Error(_) -> acc
-    Ok(block) -> {
-      case block {
-        Free -> path_loop(m, acc, PointDir(next, pd.dir))
-        Obs -> path_loop(m, acc, PointDir(pd.point, turn(pd.dir)))
-      }
-    }
-  }
+  path(m, start) |> list.map(fn(pd) { pd.point }) |> set.from_list |> set.size
 }
 
 // anywhere on the path where we continue straight
@@ -177,5 +156,38 @@ pub fn part2(input: String) -> Int {
   path(m, start)
   |> get_possible_obs
   |> set.filter(test_obs(m, start, _))
+  |> set.size
+}
+
+// anywhere on the path where we continue straight
+// or the last point on the path
+// NOTE: we are going backwards through the path
+fn get_possible_obs_paths(
+  m: Map,
+  path: List(PointDir),
+  acc: Set(Point),
+) -> Set(Point) {
+  case path {
+    [] -> acc
+    // can't put an obstruction at the starting point
+    [_] -> acc
+    [a, b, ..rest] ->
+      case
+        a.dir == b.dir
+        && is_loop(m |> dict.insert(a.point, Obs), rest |> set.from_list, b)
+      {
+        True ->
+          get_possible_obs_paths(m, [b, ..rest], acc |> set.insert(a.point))
+        False -> get_possible_obs_paths(m, [b, ..rest], acc)
+      }
+  }
+}
+
+pub fn part2_2(input: String) -> Int {
+  let #(m, start) = parse(input)
+
+  // note that this currently gets the wrong answer (1812 instead of 1686)
+  path(m, start)
+  |> get_possible_obs_paths(m, _, set.new())
   |> set.size
 }
