@@ -1,5 +1,6 @@
 import gleam/dict
 import gleam/list
+import gleam/option.{None, Some}
 import gleam/set.{type Set}
 import point.{type Point, Point}
 import util
@@ -113,7 +114,7 @@ fn get_possible_obs(path: List(PointDir)) -> Set(Point) {
       |> list.window_by_2
       |> list.filter_map(fn(pair) {
         case { pair.0 }.dir == { pair.1 }.dir {
-          True -> Ok({ pair.1 }.point)
+          True -> Ok({ pair.0 }.point)
           False -> Error(Nil)
         }
       })
@@ -125,14 +126,14 @@ fn get_possible_obs(path: List(PointDir)) -> Set(Point) {
 
 fn test_obs(m: Map, start: PointDir, o: Point) -> Bool {
   let m = m |> dict.insert(o, Obs)
-  is_loop(m, set.new(), start)
+  is_loop(m, dict.new(), start)
 }
 
-fn is_loop(m: Map, seen: Set(PointDir), pd: PointDir) -> Bool {
-  case seen |> set.contains(pd) {
+fn is_loop(m: Map, seen: PointDirDict, pd: PointDir) -> Bool {
+  case seen |> pd_contains(pd) {
     True -> True
     False -> {
-      let seen = seen |> set.insert(pd)
+      let seen = seen |> pd_insert(pd)
       let next = point.add(pd.point, move(pd.dir))
       case dict.get(m, next) {
         Error(_) -> {
@@ -159,35 +160,76 @@ pub fn part2(input: String) -> Int {
   |> set.size
 }
 
-// anywhere on the path where we continue straight
-// or the last point on the path
+type PointDirDict =
+  dict.Dict(Point, Set(Dir))
+
+fn pd_insert(d: PointDirDict, pd: PointDir) -> PointDirDict {
+  d
+  |> dict.upsert(pd.point, fn(o) {
+    case o {
+      Some(v) -> v |> set.insert(pd.dir)
+      None -> [pd.dir] |> set.from_list
+    }
+  })
+}
+
+fn pd_contains(d: PointDirDict, pd: PointDir) -> Bool {
+  case d |> dict.get(pd.point) {
+    Error(_) -> False
+    Ok(v) -> v |> set.contains(pd.dir)
+  }
+}
+
+fn pd_delete(d: PointDirDict, pd: PointDir) -> PointDirDict {
+  case d |> dict.get(pd.point) {
+    Error(_) -> d
+    Ok(v) -> {
+      let v = v |> set.delete(pd.dir)
+      case v |> set.size {
+        0 -> d |> dict.delete(pd.point)
+        _ -> d |> dict.insert(pd.point, v)
+      }
+    }
+  }
+}
+
 // NOTE: we are going backwards through the path
-fn get_possible_obs_paths(
+fn get_obstacles(
   m: Map,
   path: List(PointDir),
+  seen: PointDirDict,
   acc: Set(Point),
 ) -> Set(Point) {
   case path {
     [] -> acc
     // can't put an obstruction at the starting point
     [_] -> acc
-    [a, b, ..rest] ->
-      case
+    [a, b, ..rest] -> {
+      // we've going backwards, so remove points from the seen set
+      let seen = seen |> pd_delete(a) |> pd_delete(b)
+      // add `a` to acc if `a` can be an obstacle
+      let acc = case
+        // can't have been a turn
         a.dir == b.dir
-        && is_loop(m |> dict.insert(a.point, Obs), rest |> set.from_list, b)
+        // we can't have already crossed the point
+        && !dict.has_key(seen, a.point)
+        // and it creates a loop
+        && is_loop(m |> dict.insert(a.point, Obs), seen, b)
       {
-        True ->
-          get_possible_obs_paths(m, [b, ..rest], acc |> set.insert(a.point))
-        False -> get_possible_obs_paths(m, [b, ..rest], acc)
+        True -> acc |> set.insert(a.point)
+        False -> acc
       }
+      get_obstacles(m, [b, ..rest], seen, acc)
+    }
   }
 }
 
 pub fn part2_2(input: String) -> Int {
   let #(m, start) = parse(input)
 
-  // note that this currently gets the wrong answer (1812 instead of 1686)
-  path(m, start)
-  |> get_possible_obs_paths(m, _, set.new())
-  |> set.size
+  let path = path(m, start)
+
+  let seen = path |> list.fold(dict.new(), fn(acc, pd) { acc |> pd_insert(pd) })
+
+  get_obstacles(m, path, seen, set.new()) |> set.size
 }
