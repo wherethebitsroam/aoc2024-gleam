@@ -1,5 +1,6 @@
 import gleam/int
 import gleam/list
+import gleam/order
 import gleam/string
 import util
 
@@ -104,6 +105,10 @@ type Node {
   Node(id: Int, start: Int, end: Int)
 }
 
+type Disk {
+  Disk(files: List(Node), free_list: List(Node))
+}
+
 fn node(id: Int, start: Int, size: Int) -> Node {
   Node(id, start, start + size)
 }
@@ -117,31 +122,54 @@ fn sort_nodes(nodes: List(Node)) -> List(Node) {
 }
 
 // remaining should be in reverse of id
-fn reorder(remaining: List(Node), processed: List(Node)) -> List(Node) {
+fn reorder(disk: Disk) -> Disk {
+  reorder_loop(disk.files, disk.free_list |> sort_nodes, [])
+}
+
+fn reorder_loop(
+  remaining: List(Node),
+  free_list: List(Node),
+  processed: List(Node),
+) -> Disk {
   case remaining {
-    [] -> processed
+    [] -> Disk(processed, free_list)
     [n, ..rest] -> {
-      let sorted = remaining |> list.append(processed) |> sort_nodes
-      let size = size(n)
-      let n = case find_spot(sorted, n.start, size) {
-        Error(_) -> n
-        Ok(start) -> node(n.id, start, size)
-      }
-      reorder(rest, [n, ..processed])
+      let #(free_list, n) = find_free(free_list, n)
+      reorder_loop(rest, free_list, [n, ..processed])
     }
   }
 }
 
-fn find_spot(nodes: List(Node), start: Int, size: Int) -> Result(Int, Nil) {
-  case nodes {
-    [a, b, ..rest] ->
+fn find_free(free_list: List(Node), node: Node) -> #(List(Node), Node) {
+  case find_free_loop(free_list, [], node) {
+    Ok(update) -> update
+    // we didn't find a spot. return unchanged
+    Error(_) -> #(free_list, node)
+  }
+}
+
+fn find_free_loop(
+  free_list: List(Node),
+  checked: List(Node),
+  node: Node,
+) -> Result(#(List(Node), Node), Nil) {
+  case free_list {
+    [free, ..rest] ->
       // we don't want to move a node right
-      case a.end > start {
+      case free.start > node.start {
         True -> Error(Nil)
         False ->
-          case b.start - a.end >= size {
-            True -> Ok(a.end)
-            False -> find_spot([b, ..rest], start, size)
+          case int.compare(size(free), size(node)) {
+            order.Lt -> find_free_loop(rest, [free, ..checked], node)
+            order.Eq -> {
+              let node = Node(node.id, free.start, free.end)
+              Ok(#(checked |> list.reverse |> list.append(rest), node))
+            }
+            order.Gt -> {
+              let node = Node(node.id, free.start, free.start + size(node))
+              let free = Node(-1, node.end, free.end)
+              Ok(#(checked |> list.reverse |> list.append([free, ..rest]), node))
+            }
           }
       }
     _ -> Error(Nil)
@@ -158,26 +186,30 @@ fn checksum2(nodes: List(Node), acc: Int) -> Int {
   }
 }
 
-fn parse_disk(disk: List(Int), id: Int, idx: Int, acc: List(Node)) -> List(Node) {
+fn parse_disk(disk: List(Int), id: Int, idx: Int, acc: Disk) -> Disk {
   case disk {
     [] -> acc
     // A single last node can only be a file
-    [file] -> [node(id, idx, file), ..acc]
+    [file] -> Disk([node(id, idx, file), ..acc.files], acc.free_list)
     [file, free, ..rest] -> {
-      let acc = [node(id, idx, file), ..acc]
+      let files = [node(id, idx, file), ..acc.files]
+      let frees = [node(-1, idx + file, free), ..acc.free_list]
       let idx = idx + file + free
-      parse_disk(rest, id + 1, idx, acc)
+      parse_disk(rest, id + 1, idx, Disk(files, frees))
     }
   }
 }
 
 pub fn part2(input: String) -> Int {
   let disk =
-    input |> string.trim |> string.to_graphemes |> list.map(util.parse_int)
+    input
+    |> string.trim
+    |> string.to_graphemes
+    |> list.map(util.parse_int)
+    |> parse_disk(0, 0, Disk([], []))
+    |> reorder
 
-  disk
-  |> parse_disk(0, 0, [])
-  |> reorder([])
+  disk.files
   |> sort_nodes
   |> checksum2(0)
 }
