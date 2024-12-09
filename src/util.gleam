@@ -1,4 +1,5 @@
 import gleam/dict
+import gleam/int
 import gleam/list
 import gleam/string
 import point.{type Point, Point}
@@ -14,4 +15,9 @@ pub fn map_to_dict(input: String) -> dict.Dict(Point, String) {
   })
   |> list.flatten
   |> dict.from_list
+}
+
+pub fn parse_int(s: String) -> Int {
+  let assert Ok(i) = int.parse(s)
+  i
 }
