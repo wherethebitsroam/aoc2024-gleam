@@ -1,6 +1,7 @@
 import gleam/dict.{type Dict}
 import gleam/int
 import gleam/list
+import gleam/pair
 import gleam/result
 import gleam/string
 import util
@@ -53,36 +54,27 @@ type Item {
 type Cache =
   Dict(Item, Int)
 
-// a monad to maintain the cache
-type CacheValue {
-  CacheValue(cache: Cache, value: Int)
-}
-
-fn value(cv: CacheValue) -> Int {
-  cv.value
-}
-
-fn blink2(cache: Cache, l: List(Int), times: Int) -> CacheValue {
+fn blink2(cache: Cache, l: List(Int), times: Int) -> #(Cache, Int) {
   case times {
-    0 -> CacheValue(cache, l |> list.length)
+    0 -> #(cache, l |> list.length)
     _ -> {
-      let initial = CacheValue(cache, 0)
       l
-      |> list.fold(initial, fn(acc, x) {
-        let cv = resolve(CacheValue(acc.cache, x), times)
-        CacheValue(cv.cache, acc.value + cv.value)
+      |> list.fold(#(cache, 0), fn(acc, x) {
+        let #(cache, acc) = acc
+        let #(cache, value) = resolve(cache, x, times)
+        #(cache, acc + value)
       })
     }
   }
 }
 
-fn resolve(cv: CacheValue, times: Int) -> CacheValue {
-  let item = Item(cv.value, times)
-  case cv.cache |> dict.get(item) {
-    Ok(x) -> CacheValue(cv.cache, x)
+fn resolve(cache: Cache, value: Int, times: Int) -> #(Cache, Int) {
+  let item = Item(value, times)
+  case cache |> dict.get(item) {
+    Ok(x) -> #(cache, x)
     Error(_) -> {
-      let v = blink2(cv.cache, apply_rule(cv.value), times - 1)
-      CacheValue(v.cache |> dict.insert(item, v.value), v.value)
+      let #(cache, v) = blink2(cache, apply_rule(value), times - 1)
+      #(cache |> dict.insert(item, v), v)
     }
   }
 }
@@ -93,5 +85,5 @@ pub fn part2(input: String) -> Int {
   |> string.split(" ")
   |> list.map(util.parse_int)
   |> blink2(dict.new(), _, 75)
-  |> value
+  |> pair.second
 }
