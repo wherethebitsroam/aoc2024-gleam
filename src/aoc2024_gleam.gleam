@@ -1,9 +1,9 @@
-import day11
+import day12
 import gleam/io
 import simplifile
 
 pub fn main() {
-  let assert Ok(input) = simplifile.read(from: "../day11.txt")
-  let value = day11.part2(input)
+  let assert Ok(input) = simplifile.read(from: "../day12.txt")
+  let value = day12.part2(input)
   io.debug(value)
 }

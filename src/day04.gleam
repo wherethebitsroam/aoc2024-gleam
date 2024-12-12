@@ -1,4 +1,5 @@
 import gleam/dict
+import gleam/int
 import gleam/list
 import gleam/string
 import point.{type Point, Point}
@@ -163,5 +164,5 @@ pub fn part1_2(input: String) -> Int {
   letters
   |> dict.keys
   |> list.map(fn(i) { check1(letters, dir_offsets, i) })
-  |> list.fold(0, fn(a, b) { a + b })
+  |> list.fold(0, int.add)
 }

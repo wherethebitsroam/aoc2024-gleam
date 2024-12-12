@@ -128,7 +128,7 @@ pub fn part1(input: String) -> Int {
   updates
   |> list.filter(check_update(d, _))
   |> list.map(get_middle)
-  |> list.fold(0, fn(a, b) { a + b })
+  |> list.fold(0, int.add)
 }
 
 pub fn part2(input: String) -> Int {
@@ -138,5 +138,5 @@ pub fn part2(input: String) -> Int {
   |> list.filter(fn(l) { !check_update(d, l) })
   |> list.map(reorder(d, _))
   |> list.map(get_middle)
-  |> list.fold(0, fn(a, b) { a + b })
+  |> list.fold(0, int.add)
 }

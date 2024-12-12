@@ -11,12 +11,7 @@ fn edges(m: Dict(Point, Int)) -> Dict(Point, List(Point)) {
   |> list.map(fn(x) {
     let #(p, h) = x
     let next =
-      [
-        point.add(p, Point(1, 0)),
-        point.add(p, Point(-1, 0)),
-        point.add(p, Point(0, 1)),
-        point.add(p, Point(0, -1)),
-      ]
+      point.neighbours(p)
       // get heights
       |> list.filter_map(fn(n) {
         m

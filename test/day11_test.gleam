@@ -15,5 +15,5 @@ pub fn part1_test() {
 
 pub fn part2_test() {
   day11.part2(example)
-  |> should.equal(0)
+  |> should.equal(65_601_038_650_482)
 }

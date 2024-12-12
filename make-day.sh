@@ -11,10 +11,14 @@ if [ -z "$day" ]; then
 fi
 
 cat > "src/day$day.gleam" <<__END__
+import gleam/dict.{type Dict}
 import gleam/int
-import gleam/io
 import gleam/list
-import gleam/string
+import gleam/pair
+import gleam/result
+import gleam/set.{type Set}
+import point.{type Point, Point}
+import util
 
 pub fn part1(input: String) -> Int {
   0

@@ -1,4 +1,5 @@
 import gleam/int
+import gleam/list
 import gleam/order
 
 pub type Point {
@@ -23,4 +24,15 @@ pub fn compare(p1: Point, p2: Point) -> order.Order {
     order.Lt -> order.Lt
     order.Gt -> order.Gt
   }
+}
+
+const adjacent = [Point(0, 1), Point(0, -1), Point(1, 0), Point(-1, 0)]
+
+pub fn neighbours(p: Point) -> List(Point) {
+  adjacent |> list.map(add(_, p))
+}
+
+pub fn is_neighbour(p1: Point, p2: Point) -> Bool {
+  let p = sub(p1, p2)
+  int.absolute_value(p.x) + int.absolute_value(p.y) == 1
 }

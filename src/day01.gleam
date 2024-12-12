@@ -41,5 +41,5 @@ pub fn part2(input: String) -> Int {
 
   left
   |> list.map(fn(x) { get_freq(freq, x) * x })
-  |> list.fold(0, fn(a, b) { a + b })
+  |> list.fold(0, int.add)
 }
