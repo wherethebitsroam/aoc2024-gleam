@@ -36,3 +36,7 @@ pub fn is_neighbour(p1: Point, p2: Point) -> Bool {
   let p = sub(p1, p2)
   int.absolute_value(p.x) + int.absolute_value(p.y) == 1
 }
+
+pub fn to_string(p: Point) -> String {
+  "(" <> int.to_string(p.x) <> "," <> int.to_string(p.y) <> ")"
+}

@@ -17,6 +17,7 @@ import gleam/list
 import gleam/pair
 import gleam/result
 import gleam/set.{type Set}
+import gleam/string
 import point.{type Point, Point}
 import util
 
@@ -52,3 +53,6 @@ pub fn part2_test() {
 __END__
 
 echo "Generated day${day}!"
+
+echo "Fetching input"
+curl -b "$COOKIE" "https://adventofcode.com/2024/day/15/input" > ../day${day}.txt
