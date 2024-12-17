@@ -43,3 +43,10 @@ fn print_line(p: Point, m: dict.Dict(Point, a), f: fn(a) -> String) {
 pub fn print_map(m: dict.Dict(Point, a), f: fn(a) -> String) {
   print_line(Point(0, 0), m, f)
 }
+
+pub fn unwrap_or_panic(r: Result(a, b)) -> a {
+  case r {
+    Ok(a) -> a
+    Error(_) -> panic as "failed to unwrap"
+  }
+}

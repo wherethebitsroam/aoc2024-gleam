@@ -55,4 +55,4 @@ __END__
 echo "Generated day${day}!"
 
 echo "Fetching input"
-curl -b "$COOKIE" "https://adventofcode.com/2024/day/15/input" > ../day${day}.txt
+curl -b "$COOKIE" "https://adventofcode.com/2024/day/${day}/input" > ../day${day}.txt
