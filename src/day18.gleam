@@ -27,11 +27,9 @@ fn neighbours(p: Point, size: Int, corrupted: Set(Point)) -> List(Point) {
 }
 
 fn walk(
-  ps: Dict(Point, List(Point)),
   unvisited: Dict(Point, Int),
   visited: Dict(Point, Int),
-  corrupted: Set(Point),
-  // neighbours: fn(Point) -> List(Point),
+  neighbours: fn(Point) -> List(Point),
   end: Point,
 ) -> Result(Int, Nil) {
   case unvisited |> dict.is_empty {
@@ -46,10 +44,7 @@ fn walk(
           let visited = visited |> dict.insert(p, best)
 
           let unvisited =
-            ps
-            |> dict.get(p)
-            |> util.unwrap_or_panic
-            |> list.filter(fn(n) { !{ corrupted |> set.contains(n) } })
+            neighbours(p)
             |> list.fold(unvisited, fn(acc, n) {
               let score = best + 1
               acc
@@ -63,70 +58,41 @@ fn walk(
             // drop any visited nodes
             |> dict.drop(visited |> dict.keys)
 
-          walk(ps, unvisited, visited, corrupted, end)
+          walk(unvisited, visited, neighbours, end)
         }
       }
     }
   }
 }
 
-fn parse(input: String, size: Int) -> #(Dict(Point, List(Point)), List(Point)) {
-  let bytes =
-    input
-    |> string.trim
-    |> string.split("\n")
-    |> list.map(fn(line) {
-      let #(x, y) = case line |> string.split_once(",") {
-        Ok(v) -> v
-        Error(_) -> panic as { "failed to split: " <> line }
-      }
-      Point(util.parse_int(x), util.parse_int(y))
-    })
-
-  #(map_loop(0, 0, size, dict.new()), bytes)
-}
-
-fn map_loop(
-  x: Int,
-  y: Int,
-  size: Int,
-  acc: Dict(Point, List(Point)),
-) -> Dict(Point, List(Point)) {
-  case y > size {
-    True -> acc
-    False ->
-      case x > size {
-        True -> map_loop(0, y + 1, size, acc)
-        False -> {
-          let p = Point(x, y)
-          let ns =
-            point.neighbours(p)
-            |> list.filter(fn(n) {
-              n.x >= 0 && n.x <= size && n.y >= 0 && n.y <= size
-            })
-
-          map_loop(x + 1, y, size, acc |> dict.insert(p, ns))
-        }
-      }
-  }
+fn parse(input: String) -> List(Point) {
+  input
+  |> string.trim
+  |> string.split("\n")
+  |> list.map(fn(line) {
+    let #(x, y) = case line |> string.split_once(",") {
+      Ok(v) -> v
+      Error(_) -> panic as { "failed to split: " <> line }
+    }
+    Point(util.parse_int(x), util.parse_int(y))
+  })
 }
 
 pub fn part1(input: String, size: Int, fallen: Int) -> Int {
   let unvisited = [#(Point(0, 0), 0)] |> dict.from_list
   let end = Point(size, size)
-  let #(m, bytes) = input |> parse(size)
+  let corrupted = input |> parse |> list.take(fallen) |> set.from_list
 
-  let corrupted = bytes |> list.take(fallen) |> set.from_list
-
-  walk(m, unvisited, dict.new(), corrupted, end) |> util.unwrap_or_panic
+  walk(unvisited, dict.new(), neighbours(_, size, corrupted), end)
+  |> util.unwrap_or_panic
 }
 
 fn blocker(
-  ps: Dict(Point, List(Point)),
   bytes: List(Point),
   end: Point,
   from: Int,
   to: Int,
+  size: Int,
 ) -> Point {
   case from == to {
     True -> {
@@ -141,9 +107,9 @@ fn blocker(
       let corrupted = bytes |> list.take(mid) |> set.from_list
       let unvisited = [#(Point(0, 0), 0)] |> dict.from_list
 
-      case walk(ps, unvisited, dict.new(), corrupted, end) {
-        Error(_) -> blocker(ps, bytes, end, from, mid)
-        Ok(_) -> blocker(ps, bytes, end, mid + 1, to)
+      case walk(unvisited, dict.new(), neighbours(_, size, corrupted), end) {
+        Error(_) -> blocker(bytes, end, from, mid, size)
+        Ok(_) -> blocker(bytes, end, mid + 1, to, size)
       }
     }
   }
@@ -151,7 +117,7 @@ fn blocker(
 
 pub fn part2(input: String, size: Int, fallen: Int) -> String {
   let end = Point(size, size)
-  let #(m, bytes) = input |> parse(size)
-  let p = blocker(m, bytes, end, fallen, bytes |> list.length)
+  let bytes = input |> parse
+  let p = blocker(bytes, end, fallen, bytes |> list.length, size)
   int.to_string(p.x) <> "," <> int.to_string(p.y)
 }
