@@ -1,12 +1,8 @@
 import gleam/dict.{type Dict}
 import gleam/int
-import gleam/io
 import gleam/list
 import gleam/pair
-import gleam/result
-import gleam/set.{type Set}
 import gleam/string
-import point.{type Point, Point}
 import util
 
 fn parse(input: String) -> #(List(String), List(String)) {
@@ -19,44 +15,40 @@ fn parse(input: String) -> #(List(String), List(String)) {
   #(start |> string.split(", "), end |> string.split("\n"))
 }
 
-fn solve(patterns: List(String), designs: List(String)) -> Int {
+fn solve(patterns: List(String), designs: List(String)) -> List(Int) {
   designs
-  |> list.fold(#(dict.new(), 0), fn(acc, design) {
-    let #(cache, count) = acc
-    let #(cache, success) = solveable(cache, design, patterns)
-    let count = case success {
-      True -> count + 1
-      False -> count
-    }
-    #(cache, count)
+  |> list.fold(#(dict.new(), []), fn(acc, design) {
+    let #(cache, acc) = acc
+    let #(cache, ways) = solveable(cache, design, patterns)
+    #(cache, [ways, ..acc])
   })
   |> pair.second
 }
 
 fn solveable(
-  cache: Dict(String, Bool),
+  cache: Dict(String, Int),
   design: String,
   patterns: List(String),
-) -> #(Dict(String, Bool), Bool) {
+) -> #(Dict(String, Int), Int) {
   // io.debug(#(design, patterns))
   case cache |> dict.get(design) {
-    Ok(b) -> #(cache, b)
+    Ok(count) -> #(cache, count)
     Error(_) -> {
       case design |> string.is_empty {
-        True -> #(cache, True)
+        True -> #(cache, 1)
         False -> {
-          let #(cache, success) =
+          let #(cache, ways) =
             patterns
             |> list.filter(fn(p) { design |> string.starts_with(p) })
-            |> list.fold(#(cache, False), fn(acc, p) {
-              let #(cache, success) = acc
+            |> list.fold(#(cache, 0), fn(acc, p) {
+              let #(cache, acc) = acc
               let design = design |> string.drop_start(p |> string.length)
-              let #(cache, solved) = solveable(cache, design, patterns)
-              #(cache, success || solved)
+              let #(cache, ways) = solveable(cache, design, patterns)
+              #(cache, acc + ways)
             })
 
-          let cache = cache |> dict.insert(design, success)
-          #(cache, success)
+          let cache = cache |> dict.insert(design, ways)
+          #(cache, ways)
         }
       }
     }
@@ -65,9 +57,10 @@ fn solveable(
 
 pub fn part1(input: String) -> Int {
   let #(patterns, designs) = input |> parse
-  solve(patterns, designs)
+  solve(patterns, designs) |> list.filter(fn(c) { c != 0 }) |> list.length
 }
 
 pub fn part2(input: String) -> Int {
-  0
+  let #(patterns, designs) = input |> parse
+  solve(patterns, designs) |> list.fold(0, int.add)
 }
