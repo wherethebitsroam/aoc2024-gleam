@@ -5,6 +5,6 @@ import simplifile
 
 pub fn main() {
   let assert Ok(input) = simplifile.read(from: "../day20.txt")
-  let value = day20.part1(input, 100)
+  let value = day20.part2(input, 100)
   io.debug(value)
 }

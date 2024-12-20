@@ -18,6 +18,10 @@ pub fn scale(p: Point, factor: Int) -> Point {
   Point(p.x * factor, p.y * factor)
 }
 
+pub fn manhatten(p1: Point, p2: Point) -> Int {
+  int.absolute_value(p1.x - p2.x) + int.absolute_value(p1.y - p2.y)
+}
+
 pub fn compare(p1: Point, p2: Point) -> order.Order {
   case int.compare(p1.x, p2.x) {
     order.Eq -> int.compare(p1.y, p2.y)

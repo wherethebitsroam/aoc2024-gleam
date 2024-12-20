@@ -1,12 +1,7 @@
 import gleam/dict.{type Dict}
 import gleam/int
-import gleam/io
 import gleam/list
 import gleam/option.{None, Some}
-import gleam/pair
-import gleam/result
-import gleam/set.{type Set}
-import gleam/string
 import point.{type Point, Point}
 import util
 
@@ -54,64 +49,59 @@ fn next(
   }
 }
 
-fn turn(p1: Point, p2: Point) -> Bool {
-  p1.x != p2.x && p1.y != p2.y
+fn points_within_range(p: Point, range: Int) -> List(Point) {
+  list.range(-range, range)
+  |> list.flat_map(fn(dy) {
+    let x_range = range - int.absolute_value(dy)
+    list.range(-x_range, x_range)
+    |> list.map(fn(dx) { Point(p.x + dx, p.y + dy) })
+  })
 }
 
 fn walk(
   start: Point,
   end: Point,
+  range: Int,
   m: Dict(Point, String),
 ) -> Dict(Point, Details) {
   let next = next(end, m, None) |> util.unwrap_or_panic
   let acc = [#(end, Details(0, []))] |> dict.from_list
-  walk_loop(next, end, 1, m, acc, start)
+  walk_loop(next, end, 1, range, m, acc, start)
 }
 
 fn walk_loop(
   p: Point,
   from: Point,
   dist: Int,
+  range: Int,
   m: Dict(Point, String),
   acc: Dict(Point, Details),
   start: Point,
 ) -> Dict(Point, Details) {
-  let shortcuts = find_shortcuts(p, from, dist, m, acc)
+  let shortcuts = find_shortcuts(p, dist, range, acc)
   let acc = acc |> dict.insert(p, Details(dist, shortcuts))
   case p == start {
     True -> acc
     False -> {
       let next = next(p, m, Some(from)) |> util.unwrap_or_panic
-      walk_loop(next, p, dist + 1, m, acc, start)
+      walk_loop(next, p, dist + 1, range, m, acc, start)
     }
   }
 }
 
 fn find_shortcuts(
   p: Point,
-  from: Point,
   dist: Int,
-  m: Dict(Point, String),
+  range: Int,
   path: Dict(Point, Details),
 ) -> List(Shortcut) {
   p
-  |> point.neighbours
-  // we don't go back the way we came
-  |> list.filter(fn(n) { n != from })
-  // neighbour must be a wall
-  |> list.filter(fn(n) {
-    case m |> dict.get(n) {
-      Error(_) -> False
-      Ok(s) -> s == "#"
-    }
-  })
-  |> list.filter_map(fn(n) {
-    let dir = point.sub(n, p)
-    let dest = point.add(n, dir)
+  |> points_within_range(range)
+  |> list.filter_map(fn(dest) {
     case path |> dict.get(dest) {
       Error(_) -> Error(Nil)
-      // -2 because taking the shortcut takes 2 moves
-      Ok(details) -> Ok(Shortcut(dest, dist - details.dist - 2))
+      Ok(details) ->
+        Ok(Shortcut(dest, dist - details.dist - point.manhatten(p, dest)))
     }
   })
 }
@@ -121,7 +111,7 @@ pub fn part1(input: String, limit: Int) -> Int {
   let start = m |> find("S") |> util.unwrap_or_panic
   let end = m |> find("E") |> util.unwrap_or_panic
 
-  let path = walk(start, end, m)
+  let path = walk(start, end, 2, m)
 
   path
   |> dict.values
@@ -133,6 +123,20 @@ pub fn part1(input: String, limit: Int) -> Int {
   |> list.fold(0, fn(acc, x) { acc + x.1 })
 }
 
-pub fn part2(input: String) -> Int {
-  0
+pub fn part2(input: String, limit: Int) -> Int {
+  let m = util.map_to_dict(input)
+  let start = m |> find("S") |> util.unwrap_or_panic
+  let end = m |> find("E") |> util.unwrap_or_panic
+
+  let path = walk(start, end, 20, m)
+
+  path
+  |> dict.values
+  |> list.flat_map(fn(d) { d.shortcuts })
+  |> list.group(fn(s) { s.saves })
+  |> dict.to_list
+  |> list.map(fn(x) { #(x.0, x.1 |> list.length) })
+  |> list.sort(fn(a, b) { int.compare(a.0, b.0) })
+  |> list.filter(fn(x) { x.0 >= limit })
+  |> list.fold(0, fn(acc, x) { acc + x.1 })
 }
