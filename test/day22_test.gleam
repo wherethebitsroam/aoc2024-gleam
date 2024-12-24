@@ -1,6 +1,4 @@
 import day22
-import gleam/int
-import gleam/io
 import gleeunit
 import gleeunit/should
 
